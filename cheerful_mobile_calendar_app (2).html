@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제로투 댄스 응원 달력 캘린더</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Jua, Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f3f4f6;
+            touch-action: manipulation;
+        }
+
+        .font-jua {
+            font-family: 'Jua', sans-serif;
+        }
+
+        /* --- 제로투 댄스 핵심 키프레임 애니메이션 --- */
+        @keyframes zerotwo-sway {
+            0% {
+                transform: translateX(0px) rotate(0deg);
+            }
+            12.5% {
+                transform: translateX(-12px) rotate(-6deg) scaleY(0.97);
+            }
+            25% {
+                transform: translateX(-18px) rotate(-10deg) scaleY(1.02);
+            }
+            37.5% {
+                transform: translateX(-8px) rotate(-4deg) scaleY(0.98);
+            }
+            50% {
+                transform: translateX(0px) rotate(0deg);
+            }
+            62.5% {
+                transform: translateX(12px) rotate(6deg) scaleY(0.97);
+            }
+            75% {
+                transform: translateX(18px) rotate(10deg) scaleY(1.02);
+            }
+            87.5% {
+                transform: translateX(8px) rotate(4deg) scaleY(0.98);
+            }
+            100% {
+                transform: translateX(0px) rotate(0deg);
+            }
+        }
+
+        /* 상체 및 팔 바운스 루프 */
+        @keyframes zerotwo-arms {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-3px) rotate(-4deg); }
+            50% { transform: translateY(1px) rotate(0deg); }
+            75% { transform: translateY(-3px) rotate(4deg); }
+        }
+
+        /* 클릭 시 더 빠른 슈퍼 제로투 모드 */
+        .zerotwo-dance-normal {
+            animation: zerotwo-sway 1.1s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        .zerotwo-dance-fast {
+            animation: zerotwo-sway 0.55s infinite ease-in-out;
+            transform-origin: bottom center;
+        }
+
+        .arm-bounce {
+            animation: zerotwo-arms 0.55s infinite ease-in-out;
+            transform-origin: center center;
+        }
+
+        @keyframes music-note-float {
+            0% { transform: translateY(0) scale(0.8) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-70px) scale(1.4) rotate(30deg); opacity: 0; }
+        }
+
+        .floating-note {
+            position: absolute;
+            pointer-events: none;
+            animation: music-note-float 1.2s forwards cubic-bezier(0.22, 0.61, 0.36, 1);
+        }
+
+        /* 월별 테마 그래디언트 */
+        .theme-jan { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .theme-feb { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%); }
+        .theme-mar { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+        .theme-apr { background: linear-gradient(135deg, #fccb90 0%, #d57eeb 100%); }
+        .theme-may { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .theme-jun { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .theme-jul { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .theme-aug { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .theme-sep { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .theme-oct { background: linear-gradient(135deg, #5ee7df 0%, #b490ca 100%); }
+        .theme-nov { background: linear-gradient(135deg, #c1dfc4 0%, #deecdd 100%); }
+        .theme-dec { background: linear-gradient(135deg, #f12711 0%, #f5af19 100%); }
+
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex justify-center items-center min-h-screen p-2 sm:p-4">
+
+    <!-- 모바일 앱 컨테이너 메인 프레임 -->
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col border-4 border-white min-h-[770px] relative">
+        
+        <!-- 상단 헤더 & 월 선택 -->
+        <div id="header-bg" class="theme-jan p-5 text-slate-800 transition-all duration-500 relative overflow-hidden">
+            <!-- 파티클/장식 배경 원 -->
+            <div class="absolute -top-8 -right-8 w-28 h-28 bg-white/30 rounded-full blur-md"></div>
+            <div class="absolute -bottom-8 -left-8 w-32 h-32 bg-white/20 rounded-full blur-md"></div>
+
+            <div class="flex justify-between items-center mb-2 relative z-10">
+                <button id="prev-month-btn" class="w-10 h-10 bg-white/70 hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-gray-700 shadow-md transition">
+                    <i class="fa-solid fa-chevron-left text-lg"></i>
+                </button>
+                
+                <div class="text-center">
+                    <span id="year-display" class="text-xs font-bold uppercase tracking-wider text-gray-700 opacity-80 block">2026년</span>
+                    <h1 id="month-display" class="text-3xl font-jua text-gray-800 drop-shadow-sm">1월</h1>
+                </div>
+
+                <button id="next-month-btn" class="w-10 h-10 bg-white/70 hover:bg-white active:scale-95 rounded-full flex items-center justify-center text-gray-700 shadow-md transition">
+                    <i class="fa-solid fa-chevron-right text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 성인 남자 제로투 캐릭터 구역 -->
+            <div class="flex flex-col items-center justify-center relative z-10">
+                <div id="character-container" class="relative cursor-pointer group my-1">
+                    <!-- 성인 남자 제로투 댄스 캐릭터 SVG -->
+                    <div id="character-avatar" class="w-32 h-36 sm:w-36 sm:h-40 filter drop-shadow-xl transition-transform duration-200 active:scale-95 zerotwo-dance-normal">
+                        <svg viewBox="0 0 160 180" class="w-full h-full">
+                            <!-- 스테이지 스포트라이트 수평 후광 -->
+                            <ellipse cx="80" cy="170" rx="45" ry="8" fill="rgba(0,0,0,0.15)"/>
+                            
+                            <!-- 제로투 남자 캐릭터 전신 그룹 -->
+                            <g id="man-character">
+                                <!-- 하체 & 다리 -->
+                                <path d="M 62,130 L 58,165 L 48,167 L 58,125 Z" fill="#1E293B"/>
+                                <path d="M 98,130 L 102,165 L 112,167 L 102,125 Z" fill="#1E293B"/>
+                                <!-- 운동화 -->
+                                <ellipse cx="48" cy="167" rx="9" ry="4" fill="#38BDF8"/>
+                                <ellipse cx="112" cy="167" rx="9" ry="4" fill="#38BDF8"/>
+
+                                <!-- 골반/힙 (제로투 핵심 Sway 포인트) -->
+                                <path d="M 52,105 Q 80,120 108,105 L 102,130 Q 80,135 58,130 Z" fill="#0F172A"/>
+
+                                <!-- 상체 (후드/티셔츠) -->
+                                <path d="M 48,65 Q 80,55 112,65 L 108,110 Q 80,118 52,110 Z" fill="#3B82F6"/>
+                                <!-- 옷 주름 및 인체 디테일 -->
+                                <path d="M 70,65 Q 80,90 70,110" fill="none" stroke="#2563EB" stroke-width="3"/>
+                                <path d="M 90,65 Q 80,90 90,110" fill="none" stroke="#2563EB" stroke-width="3"/>
+
+                                <!-- 목 -->
+                                <rect x="74" y="52" width="12" height="15" rx="3" fill="#FDBA74"/>
+
+                                <!-- 손 머리 뒤로 넘긴 제로투 포즈 팔 (Left Arm) -->
+                                <g class="arm-bounce">
+                                    <path d="M 48,68 C 30,50 35,28 62,28 L 68,36 C 48,36 42,55 54,72 Z" fill="#2563EB"/>
+                                    <!-- 왼쪽 손 (머리 뒤) -->
+                                    <circle cx="64" cy="28" r="6" fill="#FDBA74"/>
+                                </g>
+
+                                <!-- 손 머리 뒤로 넘긴 제로투 포즈 팔 (Right Arm) -->
+                                <g class="arm-bounce">
+                                    <path d="M 112,68 C 130,50 125,28 98,28 L 92,36 C 112,36 118,55 106,72 Z" fill="#2563EB"/>
+                                    <!-- 오른쪽 손 (머리 뒤) -->
+                                    <circle cx="96" cy="28" r="6" fill="#FDBA74"/>
+                                </g>
+
+                                <!-- 얼굴 및 머리 -->
+                                <g id="man-head">
+                                    <!-- 턱/얼굴형 -->
+                                    <path d="M 62,38 C 62,22 98,22 98,38 C 98,52 80,58 80,58 C 80,58 62,52 62,38 Z" fill="#FDBA74"/>
+                                    <!-- 헤어 스타일 (트렌디한 댄서 스타일) -->
+                                    <path d="M 58,34 C 58,16 102,16 102,34 C 95,20 85,22 80,26 C 75,20 65,22 58,34 Z" fill="#1E293B"/>
+                                    
+                                    <!-- 눈썹 & 선글라스 (멋진 남성 댄서 느낌) -->
+                                    <rect x="64" y="38" width="14" height="8" rx="2" fill="#0F172A"/>
+                                    <rect x="82" y="38" width="14" height="8" rx="2" fill="#0F172A"/>
+                                    <line x1="78" y1="41" x2="82" y2="41" stroke="#0F172A" stroke-width="2"/>
+                                    <line x1="66" y1="40" x2="74" y2="40" stroke="#38BDF8" stroke-width="1.5"/>
+                                    <line x1="84" y1="40" x2="92" y2="40" stroke="#38BDF8" stroke-width="1.5"/>
+
+                                    <!-- 미소짓는 입 -->
+                                    <path d="M 74,50 Q 80,55 86,50" fill="none" stroke="#C2410C" stroke-width="2" stroke-linecap="round"/>
+                                </g>
+
+                                <!-- 헤드폰 액세서리 -->
+                                <path d="M 58,38 C 58,14 102,14 102,38" fill="none" stroke="#EC4899" stroke-width="4"/>
+                                <rect x="56" y="34" width="7" height="14" rx="3" fill="#EC4899"/>
+                                <rect x="97" y="34" width="7" height="14" rx="3" fill="#EC4899"/>
+                            </g>
+                        </svg>
+                    </div>
+                    
+                    <!-- 클릭 유도 배지 -->
+                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-indigo-600 text-white font-jua text-xs px-3 py-0.5 rounded-full shadow-lg whitespace-nowrap animate-bounce flex items-center gap-1 border border-indigo-300">
+                        <i class="fa-solid fa-bolt text-yellow-300"></i> 제로투 부스터!
+                    </div>
+                </div>
+
+                <!-- 응원 메시지 풍선 -->
+                <div class="bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-md border border-white/60 text-center max-w-[92%] mt-1">
+                    <p id="cheer-message" class="font-jua text-gray-800 text-sm sm:text-base tracking-wide">
+                        "신나게 흔들어봐! 오늘 하루도 네가 최고야!"
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 달력 본문 섹션 -->
+        <div class="p-4 flex-1 flex flex-col justify-between bg-slate-50/50">
+            <!-- 요일 헤더 -->
+            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-gray-500 mb-2">
+                <div class="text-red-500">일</div>
+                <div>월</div>
+                <div>화</div>
+                <div>수</div>
+                <div>목</div>
+                <div>금</div>
+                <div class="text-blue-500">토</div>
+            </div>
+
+            <!-- 날짜 그리드 -->
+            <div id="calendar-days" class="grid grid-cols-7 gap-1 text-center font-jua">
+                <!-- 날짜 셀들이 JS로 동적 생성됨 -->
+            </div>
+
+            <!-- 하단 간이 일정 정보 표시 -->
+            <div class="mt-4 pt-3 border-t border-gray-200/80">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <span class="text-xs font-bold text-gray-500 flex items-center gap-1">
+                        <i class="fa-solid fa-calendar-check text-indigo-500"></i> 선택한 날짜 일정
+                    </span>
+                    <span id="selected-date-label" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                        오늘
+                    </span>
+                </div>
+                
+                <!-- 일정 리스트 -->
+                <div id="memo-list" class="max-h-28 overflow-y-auto space-y-1.5 pr-1">
+                    <!-- 일정 목록이 출력됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 일정 추가 Floating 액션 버튼 -->
+        <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
+            <input type="text" id="memo-input" placeholder="새 일정을 입력하세요..." class="flex-1 bg-gray-100 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-400 font-sans border-none">
+            <button id="add-memo-btn" class="bg-gradient-to-r from-indigo-600 to-blue-500 text-white font-jua px-4 py-2 rounded-xl active:scale-95 transition shadow-md hover:opacity-90 flex items-center gap-1">
+                <i class="fa-solid fa-plus text-xs"></i> 추가
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript 로직 -->
+    <script>
+        // --- 1. 월별 데이터 & 테마 정의 ---
+        const MONTH_DATA = [
+            {
+                month: 1,
+                name: "1월",
+                themeClass: "theme-jan",
+                cheer: "새해 복 많이 받아! 올해 리듬에 맞춰 가보자고! 🕺⚡",
+                notes: [261.63, 329.63, 392.00, 523.25, 659.25]
+            },
+            {
+                month: 2,
+                name: "2월",
+                themeClass: "theme-feb",
+                cheer: "신나게 스웨그 넘치게! 사랑과 열정의 2월! 💕🔥",
+                notes: [329.63, 392.00, 440.00, 523.25, 440.00]
+            },
+            {
+                month: 3,
+                name: "3월",
+                themeClass: "theme-mar",
+                cheer: "새 출발! 제로투 리듬에 맞춰 파이팅 넘치게! 🌸🕺",
+                notes: [261.63, 293.66, 329.63, 349.23, 392.00]
+            },
+            {
+                month: 4,
+                name: "4월",
+                themeClass: "theme-apr",
+                cheer: "봄바람에 신나게 골반을 흔들어! 화이팅! 🌼✨",
+                notes: [293.66, 349.23, 440.00, 587.33]
+            },
+            {
+                month: 5,
+                name: "5월",
+                themeClass: "theme-may",
+                cheer: "지치지 않는 체력! 너의 5월을 최고로 만들어줄게! 🌿💪",
+                notes: [329.63, 392.00, 440.00, 493.88, 523.25]
+            },
+            {
+                month: 6,
+                name: "6월",
+                themeClass: "theme-jun",
+                cheer: "시원하게 스트레스 날리고 리듬 타자! 🍏⚡",
+                notes: [392.00, 440.00, 493.88, 523.25, 587.33]
+            },
+            {
+                month: 7,
+                name: "7월",
+                themeClass: "theme-jul",
+                cheer: "무더위도 댄스 에너지로 싹 날려버려! 🌊🕺",
+                notes: [523.25, 587.33, 659.25, 698.46, 783.99]
+            },
+            {
+                month: 8,
+                name: "8월",
+                themeClass: "theme-aug",
+                cheer: "뜨거운 열정의 8월! 멈추지 않는 댄스 타임! 🔥😎",
+                notes: [440.00, 493.88, 523.25, 587.33, 659.25]
+            },
+            {
+                month: 9,
+                name: "9월",
+                themeClass: "theme-sep",
+                cheer: "풍성하고 신나는 가을! 네가 원하는 대로 다 이뤄져! 🌾✨",
+                notes: [349.23, 392.00, 440.00, 523.25]
+            },
+            {
+                month: 10,
+                name: "10월",
+                themeClass: "theme-oct",
+                cheer: "스웨그 있게 가을 타지 말고 제로투 타자! 🍁🕺",
+                notes: [293.66, 349.23, 392.00, 440.00, 523.25]
+            },
+            {
+                month: 11,
+                name: "11월",
+                themeClass: "theme-nov",
+                cheer: "춤추면서 체온 업! 오늘도 활력 충전 완료! ☕🔥",
+                notes: [261.63, 329.63, 392.00, 440.00]
+            },
+            {
+                month: 12,
+                name: "12월",
+                themeClass: "theme-dec",
+                cheer: "올 한 해도 수고 많았어! 화려하게 마무리 댄스! 🎄🎉",
+                notes: [523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 1046.50]
+            }
+        ];
+
+        // --- 2. 상태 변수 ---
+        let currentDate = new Date(); // 현재 선택 날짜
+        let selectedDayKey = null;   // YYYY-MM-DD 선택 날짜 키
+        let audioCtx = null;          // Web Audio API Context
+        let isBoosterActive = false;
+
+        // --- 3. DOM 요소 ---
+        const monthDisplay = document.getElementById('month-display');
+        const yearDisplay = document.getElementById('year-display');
+        const headerBg = document.getElementById('header-bg');
+        const cheerMessage = document.getElementById('cheer-message');
+        const characterAvatar = document.getElementById('character-avatar');
+        const characterContainer = document.getElementById('character-container');
+        const calendarDays = document.getElementById('calendar-days');
+        const prevBtn = document.getElementById('prev-month-btn');
+        const nextBtn = document.getElementById('next-month-btn');
+        const memoInput = document.getElementById('memo-input');
+        const addMemoBtn = document.getElementById('add-memo-btn');
+        const memoList = document.getElementById('memo-list');
+        const selectedDateLabel = document.getElementById('selected-date-label');
+
+        // --- 4. Web Audio API 신나는 응원 멜로디 오디오 연주 ---
+        function playCheerAudio(notes) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                // 2연타 빠른 제로투 비트 연주
+                const fullSequence = [...notes, ...notes];
+
+                fullSequence.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.09);
+
+                    gain.gain.setValueAtTime(0.18, audioCtx.currentTime + idx * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.09 + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + idx * 0.09);
+                    osc.stop(audioCtx.currentTime + idx * 0.09 + 0.28);
+                });
+            } catch (e) {
+                console.log("Audio not supported or blocked", e);
+            }
+        }
+
+        // --- 5. 음표 및 파티클 연출 ---
+        function createParticle() {
+            const icons = ['fa-bolt', 'fa-music', 'fa-fire', 'fa-star'];
+            const randomIcon = icons[Math.floor(Math.random() * icons.length)];
+            
+            const note = document.createElement('i');
+            note.className = `fa-solid ${randomIcon} floating-note text-yellow-300 text-xl drop-shadow`;
+            
+            const rect = characterAvatar.getBoundingClientRect();
+            const containerRect = headerBg.getBoundingClientRect();
+            
+            const x = rect.left - containerRect.left + rect.width / 2 + (Math.random() * 80 - 40);
+            const y = rect.top - containerRect.top + 30;
+
+            note.style.left = `${x}px`;
+            note.style.top = `${y}px`;
+
+            headerBg.appendChild(note);
+
+            setTimeout(() => {
+                note.remove();
+            }, 1200);
+        }
+
+        // --- 6. 제로투 부스터 액션 ---
+        function triggerDanceBooster() {
+            if (isBoosterActive) return;
+            isBoosterActive = true;
+
+            const currentMonthIdx = currentDate.getMonth();
+            const monthInfo = MONTH_DATA[currentMonthIdx];
+
+            // 신나는 제로투 속도 업 클래스로 교체
+            characterAvatar.classList.remove('zerotwo-dance-normal');
+            characterAvatar.classList.add('zerotwo-dance-fast');
+
+            // 신나는 사운드 연주
+            playCheerAudio(monthInfo.notes);
+
+            // 파티클 연속 폭발
+            const interval = setInterval(() => {
+                createParticle();
+            }, 100);
+
+            // 2초 후 정상 제로투 속도로 복귀
+            setTimeout(() => {
+                characterAvatar.classList.remove('zerotwo-dance-fast');
+                characterAvatar.classList.add('zerotwo-dance-normal');
+                clearInterval(interval);
+                isBoosterActive = false;
+            }, 2000);
+        }
+
+        // --- 7. 달력 렌더링 ---
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth(); // 0 ~ 11
+            const monthInfo = MONTH_DATA[month];
+
+            // 1) 헤더 및 테마 업데이트
+            yearDisplay.textContent = `${year}년`;
+            monthDisplay.textContent = monthInfo.name;
+            cheerMessage.textContent = `"${monthInfo.cheer}"`;
+
+            // 테마 클래스 교체
+            MONTH_DATA.forEach(m => headerBg.classList.remove(m.themeClass));
+            headerBg.classList.add(monthInfo.themeClass);
+
+            // 2) 날짜 계산
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const lastDay = new Date(year, month + 1, 0).getDate();
+            const prevLastDay = new Date(year, month, 0).getDate();
+
+            calendarDays.innerHTML = '';
+
+            // 지난달 잔여 날짜 셀
+            for (let i = firstDayIndex; i > 0; i--) {
+                const dayNum = prevLastDay - i + 1;
+                const cell = document.createElement('div');
+                cell.className = "py-2.5 text-xs text-gray-300 pointer-events-none";
+                cell.textContent = dayNum;
+                calendarDays.appendChild(cell);
+            }
+
+            // 오늘 날짜 정보
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+            if (!selectedDayKey) {
+                selectedDayKey = todayStr;
+            }
+
+            // 이번달 날짜 셀
+            for (let day = 1; day <= lastDay; day++) {
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const cell = document.createElement('div');
+                
+                const isToday = (dayStr === todayStr);
+                const isSelected = (dayStr === selectedDayKey);
+
+                // 메모 존재 여부
+                const memos = getMemosForDate(dayStr);
+                const hasMemo = memos.length > 0;
+
+                cell.className = `py-2 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition relative active:scale-90 ${
+                    isSelected 
+                        ? 'bg-indigo-600 text-white font-bold shadow-md scale-105' 
+                        : isToday 
+                            ? 'bg-indigo-100 text-indigo-600 font-bold border border-indigo-300' 
+                            : 'hover:bg-gray-100 text-gray-700'
+                }`;
+
+                cell.innerHTML = `
+                    <span>${day}</span>
+                    ${hasMemo ? `<span class="w-1.5 h-1.5 ${isSelected ? 'bg-white' : 'bg-indigo-500'} rounded-full mt-0.5"></span>` : '<span class="w-1.5 h-1.5"></span>'}
+                `;
+
+                cell.addEventListener('click', () => {
+                    selectedDayKey = dayStr;
+                    renderCalendar();
+                    renderMemos();
+                });
+
+                calendarDays.appendChild(cell);
+            }
+
+            renderMemos();
+        }
+
+        // --- 8. 메모 / 일정 관리 (localStorage) ---
+        function getMemosForDate(dateKey) {
+            const data = localStorage.getItem('zerotwo_calendar_memos');
+            const allMemos = data ? JSON.parse(data) : {};
+            return allMemos[dateKey] || [];
+        }
+
+        function saveMemoForDate(dateKey, text) {
+            const data = localStorage.getItem('zerotwo_calendar_memos');
+            const allMemos = data ? JSON.parse(data) : {};
+            
+            if (!allMemos[dateKey]) {
+                allMemos[dateKey] = [];
+            }
+            allMemos[dateKey].push({
+                id: Date.now(),
+                text: text
+            });
+
+            localStorage.setItem('zerotwo_calendar_memos', JSON.stringify(allMemos));
+        }
+
+        function deleteMemoForDate(dateKey, id) {
+            const data = localStorage.getItem('zerotwo_calendar_memos');
+            if (!data) return;
+            const allMemos = JSON.parse(data);
+            
+            if (allMemos[dateKey]) {
+                allMemos[dateKey] = allMemos[dateKey].filter(memo => memo.id !== id);
+                if (allMemos[dateKey].length === 0) {
+                    delete allMemos[dateKey];
+                }
+            }
+
+            localStorage.setItem('zerotwo_calendar_memos', JSON.stringify(allMemos));
+        }
+
+        function renderMemos() {
+            if (!selectedDayKey) return;
+            
+            selectedDateLabel.textContent = selectedDayKey;
+            const memos = getMemosForDate(selectedDayKey);
+            memoList.innerHTML = '';
+
+            if (memos.length === 0) {
+                memoList.innerHTML = `<p class="text-xs text-gray-400 py-2 text-center font-jua">등록된 일정이 없습니다. 오늘 목표를 작성해보세요!</p>`;
+                return;
+            }
+
+            memos.forEach(memo => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm text-xs text-gray-700";
+                item.innerHTML = `
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt text-indigo-500"></i> ${escapeHtml(memo.text)}
+                    </span>
+                    <button class="delete-btn text-gray-300 hover:text-red-400 transition p-1" data-id="${memo.id}">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+
+                item.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    const id = Number(e.currentTarget.getAttribute('data-id'));
+                    deleteMemoForDate(selectedDayKey, id);
+                    renderCalendar();
+                });
+
+                memoList.appendChild(item);
+            });
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        // --- 9. 이벤트 리스너 바인딩 ---
+        prevBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        characterContainer.addEventListener('click', triggerDanceBooster);
+
+        addMemoBtn.addEventListener('click', () => {
+            const text = memoInput.value.trim();
+            if (!text) return;
+            
+            saveMemoForDate(selectedDayKey, text);
+            memoInput.value = '';
+            renderCalendar();
+        });
+
+        memoInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addMemoBtn.click();
+            }
+        });
+
+        // 초기화 렌더링
+        window.onload = () => {
+            renderCalendar();
+        };
+    </script>
+</body>
+</html>
